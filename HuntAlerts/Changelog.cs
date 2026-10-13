@@ -8,6 +8,26 @@ namespace HuntAlerts
 
         public static readonly Entry[] Entries =
         {
+            new("1.4.1.7-MD",
+                Features: new[]
+                {
+                    "Per Character configurations are the new big thing here",
+                    "- Relay channels are now defined for each character, and CWLS are now saved per region as well for voyaging.",
+                    "Plaintext coordinate relays have been removed, & now only Flags will be sent out",
+                    "- (A future update may make the text customisable)",
+                    "- If you are in a state where the map cannot be opened, this will prevent any relays from being sent",
+                    "The Datacentre name is now included in notifications",
+                    "Relative timestamps from Discord posts are now supported in notifications",
+                    "Some buttons have been removed from the Notification window under certain circumstances",
+                    "- i.e. the Party Finder will not appear when not currently on the designated world",
+                    "Notifications without a valid location can now be manually set",
+                    "- This feature is still in development and is prone to bugs, The DEBUG tab has been unlocked for users to create dummy notifications to relay if needbe"
+                },
+                BugFixes: new[]
+                {
+                    "Aetherite marking is a little more reliable now, with coordinate from the text no longer overriding them",
+                    "Relays to world/region restricted chat channels will not be attempted if unavaliable"
+                }),
             new("1.4.0.11",
                 Features: new string[0],
                 BugFixes: new[]

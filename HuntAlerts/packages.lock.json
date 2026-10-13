@@ -14,11 +14,17 @@
         "resolved": "1.2.39",
         "contentHash": "fcFN01tDTIQqDuTwr1jUQK/geofiwjG5DycJQOnC72i1SsLAk1ELe+apBOuZ11UMQG8YKFZG1FgvjZPbqHyatg=="
       },
+      "ECommons": {
+        "type": "Direct",
+        "requested": "[3.2.1.22, )",
+        "resolved": "3.2.1.22",
+        "contentHash": "dGjjULRQtFbTdau9Cu1VcIQTwsbdomRxugyLciWrawHQ7nfNm76H8oUwAZFztwKtt3moiMdevzRVGIBsrgHO3g=="
+      },
       "ECommons.IPC": {
         "type": "Direct",
-        "requested": "[1.0.0.19, )",
-        "resolved": "1.0.0.19",
-        "contentHash": "jOezZev8b97tcSLvkRg9RmERH1TucuM+huLe1WoldWQRbGSiq2WsZrts+R9DZBcmSxqftCUQGq0VIh/a5s0Xwg==",
+        "requested": "[1.0.0.24, )",
+        "resolved": "1.0.0.24",
+        "contentHash": "VgPFePdAiHD3Q6f5PPjv5VlF4NAFz4RgRIch4bqA5dq0mYBH7Wjs2iVM3mW6Igo5gKatbnlTx9Z9xiuIOvzloQ==",
         "dependencies": {
           "ECommons": "3.2.0.11"
         }
@@ -113,9 +119,6 @@
           "SocketIO.Core": "3.1.1",
           "SocketIO.Serializer.Core": "3.1.1"
         }
-      },
-      "ecommons": {
-        "type": "Project"
       }
     }
   }

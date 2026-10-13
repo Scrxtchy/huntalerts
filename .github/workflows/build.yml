@@ -1,0 +1,45 @@
+name: Publish Build
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-2022
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v5
+      with:
+        submodules: recursive
+
+    - name: Install .NET
+      uses: actions/setup-dotnet@v5
+      with:
+        dotnet-version: 10.0.x
+
+    - name: Download Dalamud
+      run: |
+        Invoke-WebRequest -Uri https://goatcorp.github.io/dalamud-distrib/latest.zip -OutFile latest.zip
+        Expand-Archive -Force latest.zip "$env:AppData\XIVLauncher\addon\Hooks\dev"
+
+    - name: Build with dotnet
+      run: dotnet build --configuration Release
+
+    - name: Configure SSH Key
+      shell: powershell
+      run: |
+          New-Item -ItemType Directory -Force -Path "$HOME\.ssh"
+          
+          Set-Content -Path "$HOME\.ssh\id_rsa" -Value @"
+          ${{ secrets.SSH_PRIVATE_KEY }}
+          "@
+          
+          Attrib +R "$HOME\.ssh\id_rsa"
+
+    - name: Copy files via SCP
+      shell: powershell
+      run: |
+          scp -o LogLevel=ERROR -o StrictHostKeyChecking=no -i "$HOME\.ssh\id_rsa" -r .\HuntAlerts\bin\x64\Release\HuntAlerts\* ${{secrets.SCPATH}}  

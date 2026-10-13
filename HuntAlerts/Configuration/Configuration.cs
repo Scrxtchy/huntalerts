@@ -4,6 +4,8 @@ using Dalamud.Plugin;
 using System;
 using ECommons.DalamudServices;
 using System.Collections.Generic;
+using System.Linq;
+using Newtonsoft.Json;
 
 namespace HuntAlerts
 {
@@ -25,15 +27,46 @@ namespace HuntAlerts
 
     public static class HuntGroups
     {
-        public const string Centurio       = "Centurio";
+        public const string Centurio = "Centurio";
         public const string Shadowbringers = "Shadowbringers";
-        public const string Endwalker      = "Endwalker";
-        public const string Dawntrail      = "Dawntrail";
+        public const string Endwalker = "Endwalker";
+        public const string Dawntrail = "Dawntrail";
 
         public static readonly string[] All =
         {
             Centurio, Shadowbringers, Endwalker, Dawntrail,
         };
+    }
+
+    public class PlayerConfig
+    {
+        public string PlayerName { get; set; } = Svc.PlayerState.CharacterName;
+        public HashSet<string> RelayChannels { get; set; } = new HashSet<string>();
+
+        public Dictionary<uint, HashSet<string>> _RegionCWLSChannels { get; set; } = new Dictionary<uint, HashSet<string>>();
+        
+
+        [JsonIgnore]
+        public HashSet<string> RegionCWLSChannels
+        {
+            get
+            {
+                if (!Svc.PlayerState.IsLoaded) new HashSet<string>();
+                var region = Svc.PlayerState?.CurrentWorld.Value.DataCenter.Value.Region.RowId;
+                if (region == null) return new HashSet<string>();
+                if (!_RegionCWLSChannels.TryGetValue((uint)region, out var cwchannels))
+                {
+                    cwchannels = new HashSet<string>();
+                    _RegionCWLSChannels.Add((uint)region, cwchannels);
+                }
+                return cwchannels;
+            }
+        }
+
+        [JsonIgnore]
+        public HashSet<string> AllRelayChannels => RelayChannels.Concat(RegionCWLSChannels).ToHashSet();
+        public bool RegionLock { get; set; } = true;
+        
     }
 
     [Serializable]
@@ -66,17 +99,49 @@ namespace HuntAlerts
 
         public HashSet<string> EnabledTrainGroups { get; set; } = [];
         public HashSet<string> EnabledDatacenters { get; set; } = [];
-        public HashSet<string> EnabledWorlds      { get; set; } = [];
+        public HashSet<string> EnabledWorlds { get; set; } = [];
 
         public bool SRankEnabled { get; set; } = true;
         public bool SRankKillNotifications { get; set; } = true;
         public ScopeMode SRankScope { get; set; } = ScopeMode.CurrentDatacenterOnly;
-        public HashSet<string> EnabledSRankGroups       { get; set; } = [];
-        public HashSet<string> EnabledSRankDatacenters  { get; set; } = [];
-        public HashSet<string> EnabledSRankWorlds       { get; set; } = [];
+        public HashSet<string> EnabledSRankGroups { get; set; } = [];
+        public HashSet<string> EnabledSRankDatacenters { get; set; } = [];
+        public HashSet<string> EnabledSRankWorlds { get; set; } = [];
 
         public int SnoozeDefaultMinutes { get; set; } = 30;
         public string DefaultRelayChannel { get; set; } = "/p";
+
+        public Dictionary<ulong, PlayerConfig> _PlayerConfig { get; set; } = new();
+
+        [JsonIgnore]
+        public PlayerConfig PlayerConfig
+        {
+            get
+            {
+                var cid = Svc.PlayerState.ContentId;
+
+                if (!_PlayerConfig.TryGetValue(cid, out var playerConfig))
+                {
+                    playerConfig = new();
+                    _PlayerConfig.Add(cid, playerConfig);
+                }
+                return playerConfig;
+            }
+        }
+
+
+        /* public PlayerConfig GetPlayerConfig()
+         {
+             if (!_PlayerConfig.TryGetValue(Svc.PlayerState.ContentId, out PlayerConfig playerConfig))
+             {
+                 playerConfig = new();
+                 _PlayerConfig.Add(Svc.PlayerState.ContentId, playerConfig);
+             }
+
+             return playerConfig;
+         }*/
+
+        public bool EchoTestRelay { get; set; } = false;
         public bool RelayFlagLink { get; set; } = true;
         public bool WorldArrowEnabled { get; set; } = true;
         public bool ArrowChatPickup { get; set; } = true;

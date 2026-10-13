@@ -1,19 +1,29 @@
 using Dalamud.Game.Text.SeStringHandling.Payloads;
+using Dalamud.Utility;
 using ECommons;
 using ECommons.DalamudServices;
 using ECommons.Logging;
+using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using Lumina.Excel.Sheets;
 using System;
+using System.Linq;
+using System.Numerics;
 
 namespace HuntAlerts.Helpers;
 public static class MapManager
 {
-    public static void OpenMapWithMarker(uint territoryType, float x, float y)
+    public static bool OpenMapWithMarker(uint territoryType, float x, float y)
     {
         var map = Svc.Data.GetExcelSheet<TerritoryType>().GetRow(territoryType).Map.RowId;
         var linkPayload = new MapLinkPayload(territoryType, map, x, y);
-        Svc.GameGui.OpenMapWithMapLink(linkPayload);
+        return Svc.GameGui.OpenMapWithMapLink(linkPayload);
+    }
+
+    public static unsafe bool MapIsOpen()
+    {
+        var agent = AgentMap.Instance();
+        return agent != null && agent->IsAgentActive();
     }
 
     public static unsafe void CloseMap()
@@ -41,7 +51,7 @@ public static class MapManager
             if (data.Territory.ValueNullable == null) continue;
             if (data.PlaceName.ValueNullable == null) continue;
             if (data.Territory.Value.RowId != territoryType) continue;
-            if (!Svc.Data.GetExcelSheet<Map>().TryGetFirst(m => m.TerritoryType.RowId == territoryType, out var place)) continue;
+            if (!Svc.Data.GetExcelSheet<Lumina.Excel.Sheets.Map>().TryGetFirst(m => m.TerritoryType.RowId == territoryType, out var place)) continue;
 
             var scale = place.SizeFactor;
             var mapMarker = Svc.Data.GetSubrowExcelSheet<MapMarker>().AllRows()
@@ -63,6 +73,27 @@ public static class MapManager
             }
         }
         return (bestId, bestName);
+    }
+
+    public static (uint territory, float ax, float ay) GetAetheryteTerritoryCoords(uint rowId)
+    {
+
+        var aetheryte = Svc.Data.GetExcelSheet<Aetheryte>().GetRow(rowId);
+
+        var mapMarker = Svc.Data.GetSubrowExcelSheet<MapMarker>().AllRows()
+                .FirstOrNull(m => m.DataType == 3 && m.DataKey.RowId == rowId);
+
+        if (!Svc.Data.GetExcelSheet<Lumina.Excel.Sheets.Map>().TryGetFirst(m => m.TerritoryType.RowId == aetheryte.Territory.RowId, out var place))
+        {
+            throw new Exception();
+        }
+            
+
+        var scale = place.SizeFactor;
+        var ax = ConvertMapMarkerToMapCoordinate(mapMarker.Value.X, scale);
+        var ay = ConvertMapMarkerToMapCoordinate(mapMarker.Value.Y, scale);
+
+        return (aetheryte.Territory.RowId, ax, ay);
     }
 
     public static (uint RowId, string Name) GetNearestAetheryte(MapLinkPayload maplinkMessage)
@@ -111,11 +142,46 @@ public static class MapManager
         return null;
     }
 
+    public static Aetheryte? LookupAetheryteByNameExcel(string name)
+    {
+        if(string.IsNullOrWhiteSpace(name)) return null;
+
+        if (Svc.Data.GetExcelSheet<Aetheryte>(Dalamud.Game.ClientLanguage.English).TryGetFirst(a => a.PlaceName.Value.Name.ExtractText() == name, out var aetheryte))
+        {
+            return aetheryte;
+        }
+        return null;
+
+
+        foreach (var data in Svc.Data.GetExcelSheet<Aetheryte>(Dalamud.Game.ClientLanguage.English))
+        {
+            if (!data.IsAetheryte) continue;
+            if (data.PlaceName.ValueNullable == null) continue;
+            var n = data.PlaceName.ValueNullable?.Name.ExtractText() ?? "";
+            if (n.EqualsIgnoreCase(name))
+            {
+                var zoneName = data.Territory.ValueNullable?.PlaceName.ValueNullable?.Name.ExtractText() ?? "";
+                //return (data.RowId, n, zoneName);
+            }
+        }
+        return null;
+    }
+
     public static float ConvertMapMarkerToMapCoordinate(int pos, float scale)
     {
         var num = scale / 100f;
         var rawPosition = (int)((float)(pos - 1024.0) / num * 1000f);
         return ConvertRawPositionToMapCoordinate(rawPosition, scale);
+    }
+
+    public static Vector2 ConvertMapMarkerToMapCoordinate(FlagMapMarker marker)
+    {
+        var map = Svc.Data.GetExcelSheet<Lumina.Excel.Sheets.Map>().First(m => m.TerritoryType.RowId == marker.TerritoryId);
+        Vector2 pos = new Vector2(marker.XFloat, marker.YFloat);
+        return MapUtil.WorldToMap(pos, map);
+
+        //return (ConvertMapMarkerToMapCoordinate(marker.XFloat, map.SizeFactor), ConvertMapMarkerToMapCoordinate(marker.YFloat, map.SizeFactor));
+
     }
 
     public static float ConvertRawPositionToMapCoordinate(int pos, float scale)
