@@ -80,7 +80,10 @@ public static class WorldData
                     if (!w.IsPublic) continue;
                     var name = w.Name.ExtractText();
                     if (string.IsNullOrWhiteSpace(name)) continue;
-                    if (w.DataCenter.ValueNullable is not { } dcRef) continue;
+                    //if (w.DataCenter.ValueNullable is not { } dcRef) continue;
+                    // All worlds are Elemental.
+                    if (w.Unknown0 == 0) continue;
+                    var dcRef = dcSheet.GetRow(w.Unknown0);
 
                     var dcRowId = dcRef.RowId;
                     var dcName = dcRef.Name.ExtractText();
