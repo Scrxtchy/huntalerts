@@ -310,7 +310,7 @@ public sealed class HuntSocketConnection : IDisposable
             {
                 aetheryteId = anywhere.Value.RowId;
                 aetheryteName = anywhere.Value.PlaceName.Value.Name.ExtractText();
-                startZone = anywhere.Value.Territory.Value.PlaceNameZone.Value.Name.ExtractText();
+                startZone = anywhere.Value.Territory.Value.PlaceName.Value.Name.ExtractText();
                 startTerritoryTypeId = anywhere.Value.Territory.RowId;
                 var (id, x, y) = MapManager.GetAetheryteTerritoryCoords(aetheryteId);
                 if (id != 0 && x != 0 && y != 0)
