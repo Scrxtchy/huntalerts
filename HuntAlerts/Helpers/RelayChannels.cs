@@ -92,7 +92,7 @@ public static class RelayChannels
         /* var showinst = (entry.instance > 1 &&
              (!ECommonsIPC.Lifestream.Available || ECommonsIPC.Lifestream.GetCurrentInstance() != entry.instance)) || 
  */
-        var showinst = Svc.ClientState.TerritoryType == entry.startTerritoryTypeId && entry.instance != Svc.ClientState.Instance;
+        var showinst = Svc.ClientState.TerritoryType == entry.startTerritoryTypeId ? entry.instance != Svc.ClientState.Instance : entry.instance > 1;
         var inst = showinst ? $" i{entry.instance}" : "";
 
         var label = isTrain ? "train" : "S Rank";
